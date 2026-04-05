@@ -2,15 +2,26 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyDiag DTG - Architecture ADN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>MyDiag DTG</title>
+
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="apple-touch-icon.png">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#101844">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root { --adn-blue: #101844; --adn-gold: #c5a059; --bg: #f4f6f9; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; color: #333; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; color: #333; -webkit-tap-highlight-color: transparent; }
         
         /* Navigation (Scroll horizontal fluide) */
         .tabs { display: flex; overflow-x: auto; background: var(--adn-blue); scrollbar-width: none; border-bottom: 3px solid var(--adn-gold); flex-shrink: 0; }
+        .tabs::-webkit-scrollbar { display: none; }
         .tab { padding: 15px 15px; white-space: nowrap; cursor: pointer; color: white; opacity: 0.6; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
         .tab.active { opacity: 1; background: rgba(255,255,255,0.1); }
 
@@ -78,7 +89,7 @@
             <button class="btn-action" onclick="document.getElementById('inCam').click()">📸 PRENDRE UNE PHOTO</button>
             <button class="btn-action btn-lib" onclick="document.getElementById('inLib').click()">🖼️ GALERIE PHOTOS</button>
             
-            <input type="file" id="inCam" accept="image/*" capture="camera" style="display:none" onchange="onFile(event)">
+            <input type="file" id="inCam" accept="image/*" capture="environment" style="display:none" onchange="onFile(event)">
             <input type="file" id="inLib" accept="image/*" style="display:none" onchange="onFile(event)">
         </div>
 
@@ -259,7 +270,7 @@
 
     async function exportZIP() {
         const zip = new JSZip();
-        // Création de l'arborescence exacte
+        // Création de l'arborescence exacte : "1. ENVELOPPE ET STRUCTURE / COUVERTURE_0.png"
         state.photos.forEach((p, i) => zip.file(`${p.sec}/${p.sub.replace(/[\/\\]/g, '_')}_${i}.png`, p.b64.split(',')[1], {base64: true}));
         zip.generateAsync({type:"blob"}).then(b => {
             const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `PHOTOS_ADN_${state.fileNum || 'DTG'}.zip`; a.click();
