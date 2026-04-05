@@ -28,19 +28,32 @@
         .view { display: none; }
         .view.active { display: block; }
 
-        /* Accueil */
-        .welcome-card { background: white; border-radius: 15px; padding: 35px 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; }
-        .welcome-card h1 { margin: 0 0 25px 0; color: var(--adn-blue); font-size: 1.6rem; }
+        /* NOUVEAU DESIGN ACCUEIL (DASHBOARD) */
+        .welcome-card { background: linear-gradient(135deg, var(--adn-blue) 0%, #1e2a5a 100%); color: white; border-radius: 12px; padding: 25px 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .welcome-card h1 { margin: 0; font-size: 1.8rem; letter-spacing: 1px; }
+        .welcome-card p { margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.8; }
         
-        .input-group { text-align: left; margin-bottom: 20px; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 15px; border: 1px solid #eee; }
+        .card h2 { margin-top: 0; font-size: 1.1rem; color: var(--adn-blue); border-left: 4px solid var(--adn-gold); padding-left: 10px; margin-bottom: 15px; }
+
+        .input-group { text-align: left; margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85rem; color: #555; text-transform: uppercase; }
-        input, select, textarea { width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: #fff; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: #fafafa; }
+        input:focus, textarea:focus { outline: none; border-color: var(--adn-gold); background: #fff; }
         input#fileNumber { font-weight: bold; letter-spacing: 2px; color: var(--adn-blue); font-size: 1.2rem; }
 
-        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 15px; border: 1px solid #eee; }
-        .btn-action { background: var(--adn-blue); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin: 8px 0; font-size: 0.9rem; cursor: pointer; }
+        /* Grille Statistiques Accueil */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .stat-box { background: #f8fafc; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0; }
+        .stat-box span { display: block; font-size: 2rem; font-weight: bold; color: var(--adn-gold); }
+        .stat-box label { font-size: 0.75rem; color: var(--adn-blue); font-weight: bold; text-transform: uppercase; margin-top: 5px; display: block; }
+
+        /* Boutons */
+        .btn-action { background: var(--adn-blue); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin: 8px 0; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
+        .btn-action:active { transform: scale(0.98); }
         .btn-lib { background: #546e7a; }
         .btn-save { background: #27ae60; }
+        .btn-start { background: var(--adn-gold); color: #fff; font-size: 1.1rem; box-shadow: 0 4px 6px rgba(197, 160, 89, 0.3); }
 
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 20px; }
         .gallery img { width: 100%; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; }
@@ -68,7 +81,7 @@
     <img class="modal-content" id="modalImg">
     <div class="modal-edit-box">
         <label style="color:var(--adn-gold); font-size: 0.85rem;">Modifier le commentaire :</label>
-        <textarea id="modalEditTxt" rows="3" style="margin-top: 5px;"></textarea>
+        <textarea id="modalEditTxt" rows="3" style="margin-top: 5px; border:1px solid #555; background:#222; color:white; border-radius:6px; width:100%; padding:10px; box-sizing:border-box;"></textarea>
         <div class="modal-actions">
             <button class="modal-btn btn-update" onclick="updateCurrentPhoto()">✏️ METTRE À JOUR</button>
             <button class="modal-btn btn-delete" onclick="deleteCurrentPhoto()">🗑️ SUPPRIMER</button>
@@ -91,15 +104,41 @@
     <div id="view-DASHBOARD" class="view active">
         <div class="welcome-card">
             <h1>MyDiag DTG</h1>
+            <p>Assistant de relevé terrain - Expert ADN</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span id="dashPhotoCount">0</span>
+                <label>Photos prises</label>
+            </div>
+            <div class="stat-box">
+                <span id="dashDate">--/--/----</span>
+                <label>Date du relevé</label>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Identification de la mission</h2>
             <div class="input-group">
-                <label>N° de dossier (6 chiffres max) :</label>
+                <label>N° de dossier (6 chiffres) :</label>
                 <input type="number" id="fileNumber" inputmode="numeric" pattern="[0-9]*" placeholder="000000" oninput="limit6(this)">
             </div>
             <div class="input-group">
                 <label>Nom de la Copropriété :</label>
-                <input type="text" id="projName" placeholder="Ex: Résidence Analysimmo" oninput="save()">
+                <input type="text" id="projName" placeholder="Ex: Résidence Les Cyprès" oninput="save()">
+            </div>
+            <div class="input-group">
+                <label>Adresse du site :</label>
+                <input type="text" id="projAddress" placeholder="Ex: 12 avenue de la Paix, 75000 Paris" oninput="save()">
+            </div>
+            <div class="input-group">
+                <label>Inspecteur / Technicien :</label>
+                <input type="text" id="inspectorName" placeholder="Prénom Nom" oninput="save()">
             </div>
         </div>
+
+        <button class="btn-action btn-start" onclick="showTab('ENVELOPPE ET STRUCTURE')">🚀 DÉMARRER L'INSPECTION</button>
     </div>
 
     <div id="view-SECTION" class="view">
@@ -194,7 +233,7 @@
         }
     };
 
-    let state = { name: "", fileNum: "", photos: [] };
+    let state = { name: "", fileNum: "", address: "", inspector: "", photos: [] };
     let currentSec = "";
     let currentModalIndex = -1; 
 
@@ -217,7 +256,16 @@
             drawGallery();
         } else {
             document.getElementById('view-' + cat).classList.add('active');
-            if(cat === 'EXPORT') document.getElementById('photoCount').innerText = state.photos.length;
+            updateDashStats();
+        }
+    }
+
+    function updateDashStats() {
+        if(document.getElementById('view-DASHBOARD').classList.contains('active')) {
+            document.getElementById('dashPhotoCount').innerText = state.photos.length;
+        }
+        if(document.getElementById('view-EXPORT').classList.contains('active')) {
+            document.getElementById('photoCount').innerText = state.photos.length;
         }
     }
 
@@ -262,7 +310,7 @@
                 sub: document.getElementById('subPoste').value, 
                 txt: document.getElementById('finalTxt').value, 
                 b64: cvs.toDataURL("image/png"),
-                raw: window.lastB64 // ON SAUVEGARDE L'IMAGE ORIGINALE POUR POUVOIR LA MODIFIER
+                raw: window.lastB64 
             });
             
             save(); 
@@ -288,7 +336,7 @@
     function openModal(index) {
         currentModalIndex = index;
         document.getElementById('modalImg').src = state.photos[index].b64;
-        document.getElementById('modalEditTxt').value = state.photos[index].txt; // Charge le texte actuel
+        document.getElementById('modalEditTxt').value = state.photos[index].txt; 
         document.getElementById('photoModal').style.display = "flex";
     }
 
@@ -300,10 +348,7 @@
     function deleteCurrentPhoto() {
         if(confirm("Supprimer définitivement cette photo ?")) {
             state.photos.splice(currentModalIndex, 1);
-            save(); drawGallery(); closeModal();
-            if(document.getElementById('view-EXPORT').classList.contains('active')) {
-                document.getElementById('photoCount').innerText = state.photos.length;
-            }
+            save(); drawGallery(); closeModal(); updateDashStats();
         }
     }
 
@@ -311,10 +356,8 @@
         if(currentModalIndex === -1) return;
         
         let p = state.photos[currentModalIndex];
-        
-        // Sécurité pour les très vieilles photos qui n'auraient pas la donnée 'raw'
         if(!p.raw) {
-            alert("Impossible de modifier le texte de cette photo car l'image originale n'a pas été conservée en mémoire.");
+            alert("Impossible de modifier le texte de cette photo (image originale introuvable).");
             return;
         }
 
@@ -324,11 +367,9 @@
         const img = new Image();
         
         img.onload = () => {
-            // On redessine l'image brute vierge
             cvs.width = 1000; cvs.height = 750;
             ctx.drawImage(img, 0, 0, 1000, 750);
             
-            // On refait le bandeau noir avec le NOUVEAU texte
             ctx.fillStyle = "rgba(0,0,0,0.85)"; 
             ctx.fillRect(0, 650, 1000, 100);
             ctx.fillStyle = "#c5a059"; 
@@ -338,35 +379,44 @@
             ctx.font = "19px Arial";
             ctx.fillText(newTxt, 25, 725);
             
-            // On met à jour les données
             p.txt = newTxt;
-            p.b64 = cvs.toDataURL("image/png"); // On écrase l'ancienne image incrustée
+            p.b64 = cvs.toDataURL("image/png"); 
             
             save(); 
             drawGallery(); 
             
-            // Mise à jour visuelle dans la fenêtre modale
             document.getElementById('modalImg').src = p.b64;
             
-            // Petit effet de confirmation
             let btn = document.querySelector('.btn-update');
             let originalText = btn.innerHTML;
             btn.innerHTML = "✔️ MIS À JOUR !";
             btn.style.background = "#27ae60";
             setTimeout(() => { btn.innerHTML = originalText; btn.style.background = "#2980b9"; }, 1500);
         };
-        img.src = p.raw; // On utilise la photo brute sauvegardée
+        img.src = p.raw; 
     }
     // ----------------------------
 
     function save() {
         state.name = document.getElementById('projName').value;
         state.fileNum = document.getElementById('fileNumber').value;
+        state.address = document.getElementById('projAddress').value;
+        state.inspector = document.getElementById('inspectorName').value;
         localStorage.setItem('dtg_pro_no_ai', JSON.stringify(state));
+        updateDashStats();
     }
 
     function exportHTML() {
-        let h = `<html><body style="font-family:sans-serif;padding:30px;background:#f0f0f0;"><h1>Rapport DTG | Dossier ${state.fileNum} : ${state.name}</h1>`;
+        const d = new Date().toLocaleDateString('fr-FR');
+        let h = `<html><body style="font-family:sans-serif;padding:30px;background:#f0f0f0;">
+        <div style="background:white;padding:20px;border-radius:10px;margin-bottom:20px;border-left:5px solid #101844;">
+            <h1 style="color:#101844; margin-top:0;">Rapport DTG | Dossier ${state.fileNum || 'N/A'}</h1>
+            <p><strong>Copropriété :</strong> ${state.name || 'Non renseigné'}</p>
+            <p><strong>Adresse :</strong> ${state.address || 'Non renseigné'}</p>
+            <p><strong>Inspecteur :</strong> ${state.inspector || 'Non renseigné'}</p>
+            <p><strong>Date d'export :</strong> ${d}</p>
+        </div>`;
+        
         state.photos.forEach(p => h += `<div style="background:white;padding:15px;margin-bottom:20px;border-radius:10px;"><h3>[${p.sec}] ${p.sub}</h3><img src="${p.b64}" style="max-width:800px; width:100%;"><p>${p.txt}</p></div>`);
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([h + '</body></html>'], {type:'text/html'})); a.download = `RAPPORT_${state.fileNum || 'DTG'}.html`; a.click();
     }
@@ -379,14 +429,20 @@
         });
     }
 
-    function resetApp() { if(confirm("Supprimer toutes les données et photos de ce dossier ?")) { localStorage.clear(); location.reload(); } }
+    function resetApp() { if(confirm("Attention, cela supprimera toutes les photos et les infos du dossier en cours. Continuer ?")) { localStorage.clear(); location.reload(); } }
 
     window.onload = () => {
+        // Affichage de la date du jour
+        document.getElementById('dashDate').innerText = new Date().toLocaleDateString('fr-FR');
+        
         const s = localStorage.getItem('dtg_pro_no_ai');
         if(s) { 
             state = JSON.parse(s); 
-            document.getElementById('projName').value = state.name; 
-            document.getElementById('fileNumber').value = state.fileNum; 
+            document.getElementById('projName').value = state.name || ""; 
+            document.getElementById('fileNumber').value = state.fileNum || ""; 
+            document.getElementById('projAddress').value = state.address || ""; 
+            document.getElementById('inspectorName').value = state.inspector || ""; 
+            updateDashStats();
         }
     };
 </script>
