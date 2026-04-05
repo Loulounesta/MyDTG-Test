@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyDiag DTG - Expert ADN</title>
+    <title>MyDiag DTG - ADN Analysimmo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root { --adn-blue: #101844; --adn-gold: #c5a059; --bg: #f4f6f9; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; color: #333; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; color: #333; }
         
-        /* Navigation & Tabs */
         .tabs { display: flex; overflow-x: auto; background: var(--adn-blue); scrollbar-width: none; border-bottom: 3px solid var(--adn-gold); flex-shrink: 0; }
         .tab { padding: 15px 20px; white-space: nowrap; cursor: pointer; color: white; opacity: 0.6; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
         .tab.active { opacity: 1; background: rgba(255,255,255,0.1); }
@@ -19,25 +18,23 @@
         .view.active { display: block; }
 
         /* Accueil Retouchée */
-        .welcome-card { background: white; border-radius: 15px; padding: 40px 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; }
-        .logo-placeholder { font-size: 3rem; margin-bottom: 10px; }
-        .welcome-card h1 { margin: 0; color: var(--adn-blue); font-size: 1.6rem; }
+        .welcome-card { background: white; border-radius: 15px; padding: 35px 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; }
+        .welcome-card h1 { margin: 0; color: var(--adn-blue); font-size: 1.6rem; margin-bottom: 25px; }
         
-        .input-group { text-align: left; margin-top: 25px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; color: #555; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        .input-group { text-align: left; margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85rem; color: #555; text-transform: uppercase; }
+        input, select, textarea { width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: #fff; }
         
-        .btn-config { background: none; border: 1px solid #ddd; color: #888; font-size: 0.8rem; margin-top: 20px; width: auto; padding: 5px 15px; }
+        /* Focus Dossier Numérique */
+        input#fileNumber { font-weight: bold; letter-spacing: 2px; color: var(--adn-blue); }
 
-        /* Saisie */
         .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 15px; border: 1px solid #eee; }
-        .btn-action { background: var(--adn-blue); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin: 10px 0; }
+        .btn-action { background: var(--adn-blue); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin: 10px 0; font-size: 0.9rem; }
         .btn-save { background: #27ae60; color: white; }
 
-        /* Commentaires de l'Excel */
         .comment-list { display: grid; gap: 8px; margin-top: 15px; }
-        .comment-item { background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
-        .comment-item:active { background: #e2e8f0; border-color: var(--adn-gold); }
+        .comment-item { background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; cursor: pointer; }
+        .comment-item:active { background: #e2e8f0; }
 
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 20px; }
         .gallery img { width: 100%; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
@@ -59,26 +56,24 @@
 <div class="container">
     <div id="view-DASHBOARD" class="view active">
         <div class="welcome-card">
-            <div class="logo-placeholder">🏢</div>
             <h1>MyDiag DTG</h1>
-            <p>Saisie terrain simplifiée</p>
             
             <div class="input-group">
-                <label>Nom de la Copropriété :</label>
-                <input type="text" id="projName" placeholder="Ex: Résidence Analysimmo" oninput="save()">
+                <label>N° de dossier (6 chiffres max) :</label>
+                <input type="number" id="fileNumber" inputmode="numeric" pattern="[0-9]*" placeholder="000000" oninput="limitAndSave(this)">
             </div>
-            
-            <button class="btn-config" onclick="toggleApi()">⚙️ Paramètres API</button>
-            <div id="apiBox" style="display:none; margin-top:10px;">
-                <input type="password" id="apiKey" placeholder="Clé API OpenAI" oninput="save()">
+
+            <div class="input-group">
+                <label>Nom de la Copropriété :</label>
+                <input type="text" id="projName" placeholder="Ex: Résidence Les Cyprès" oninput="save()">
             </div>
         </div>
     </div>
 
     <div id="view-SECTION" class="view">
-        <h2 id="secTitle" style="color:var(--adn-blue)">Rubrique</h2>
+        <h2 id="secTitle" style="color:var(--adn-blue); font-size: 1.2rem;">Rubrique</h2>
         <div class="card">
-            <label>Sous-poste :</label>
+            <label>Ouvrage :</label>
             <select id="subPoste" onchange="loadExcel()"></select>
             <button class="btn-action" onclick="document.getElementById('camIn').click()">📸 PRENDRE PHOTO</button>
             <input type="file" id="camIn" accept="image/*" capture="camera" style="display:none" onchange="onLoad(event)">
@@ -95,9 +90,8 @@
 
     <div id="view-EXPORT" class="view">
         <div class="card">
-            <h2>Exportation PC</h2>
-            <p>Total photos : <strong id="count">0</strong></p>
-            <button class="btn-action" onclick="exportHTML()" style="background:#444">📄 EXPORT VISIONNEUSE HTML</button>
+            <h2>Fin de mission</h2>
+            <button class="btn-action" onclick="exportHTML()" style="background:#444">📄 VISIONNEUSE HTML PC</button>
             <button class="btn-action" onclick="exportZIP()" style="background:var(--adn-gold)">📦 EXPORT ZIP (PNG)</button>
         </div>
     </div>
@@ -106,40 +100,46 @@
 <canvas id="canvas-hidden"></canvas>
 
 <script>
-    // --- DATA COMPLETE ---
+    // Configuration de votre clé API OpenAI (à remplir ici une fois pour toutes)
+    const MY_API_KEY = "AIzaSyALgB9zjGn0d7X7z5WeelO2vMEYTwwx-Fc";
+
     const DB = {
         'ENVELOPPE': {
-            'FONDATIONS': ["FONDATIONS : OK. Pas de désordres symptomatiques.", "Fissures obliques en façade : présomption de tassement."],
-            'MURS ET FAÇADES': ["Pierre apparentes.", "Béton banché.", "Épaufrures de béton.", "Défaut d'enrobage des aciers."],
+            'FONDATIONS': ["FONDATIONS : OK.", "Fissures obliques en façade."],
+            'MURS ET FAÇADES': ["Pierre apparentes.", "Béton banché.", "Épaufrures de béton.", "Défaut d'enrobage."],
             'COUVERTURE': ["Tuiles mécanique.", "Toit-terrasse PVC.", "Chéneaux encombrés."],
-            'BALCONS': ["Garde-corps conformes.", "Oxydation des fers en sous-face."],
-            'FENETRES': ["Menuiseries Bois/PVC.", "Simple vitrage : prévoir remplacement."]
+            'BALCONS': ["Garde-corps conformes.", "Oxydation des fers."],
+            'FENETRES': ["Menuiseries Bois/PVC.", "Simple vitrage."]
         },
         'SOUS-SOLS': {
             'CAVES': ["Caves sèches.", "Humidité importante / salpêtre."],
-            'PARKING': ["Marquage sol conforme.", "Marquage vétuste.", "Porte motorisée OK."]
+            'PARKING': ["Marquage sol conforme.", "Porte motorisée OK."]
         },
         'FLUIDES': {
             'GAZ (RÉSEAU)': ["Bâtiment raccordé au réseau gaz.", "Compteurs en gaine technique."],
             'COUPURE GAZ (OCG)': [
-                "Organe de Coupure Générale (OCG) identifié, accessible et signalé.",
-                "Défaut : Clé de manœuvre absente du boîtier de coupure.",
-                "Défaut : Boîtier de protection dégradé ou absent.",
-                "Défaut : Consignes de sécurité gaz non affichées.",
-                "OCG non signalé ou inaccessible."
+                "OCG accessible et signalé.",
+                "Défaut : Clé de manœuvre absente du boîtier.",
+                "Défaut : Boîtier dégradé ou absent.",
+                "Défaut : Consignes de sécurité gaz non affichées."
             ],
-            'EAU FROIDE': ["Compteurs en parties communes.", "Traces de corrosion sur colonnes."],
+            'EAU FROIDE': ["Compteurs en parties communes.", "Traces de corrosion."],
             'VENTILATION': ["VMC Simple Flux.", "VMC Hygro B.", "Ventilation naturelle."]
         },
         'SECURITE': {
             'INCENDIE': ["Extincteurs à jour.", "BAES fonctionnels.", "Trappe désenfumage OK."],
-            'AMIANTE / PLOMB': ["DTA fourni.", "CREP fourni.", "DTA non transmis.", "CREP absent."],
+            'AMIANTE / PLOMB': ["DTA fourni.", "CREP fourni.", "DTA non transmis."],
             'CHAUFFERIE': ["Porte coupe-feu conforme.", "Livret de chaufferie à jour."]
         }
     };
 
-    let state = { name: "", key: "", photos: [] };
+    let state = { name: "", fileNum: "", photos: [] };
     let currentSec = "";
+
+    function limitAndSave(el) {
+        if (el.value.length > 6) el.value = el.value.slice(0, 6);
+        save();
+    }
 
     function showTab(cat) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -156,7 +156,6 @@
         } else {
             document.getElementById('view-' + cat).classList.add('active');
         }
-        if(cat === 'EXPORT') document.getElementById('count').innerText = state.photos.length;
     }
 
     function loadExcel() {
@@ -165,8 +164,6 @@
             `<div class="comment-item" onclick="document.getElementById('finalTxt').value='${c.replace(/'/g, "\\'")}'">${c}</div>`
         ).join('');
     }
-
-    function toggleApi() { const b = document.getElementById('apiBox'); b.style.display = b.style.display==='none'?'block':'none'; }
 
     function onLoad(e) {
         const file = e.target.files[0];
@@ -178,22 +175,19 @@
     }
 
     async function callAI(b64) {
-        if(!state.key) { document.getElementById('finalTxt').value = ""; return; }
+        if(!MY_API_KEY) return;
         try {
             const res = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${state.key}`},
+                headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${MY_API_KEY}`},
                 body: JSON.stringify({
                     model: "gpt-4o",
-                    messages: [{role: "user", content: [
-                        {type: "text", text: "Expert DTG. Légende courte (150 car) pour cette photo."},
-                        {type: "image_url", image_url: {url: b64}}
-                    ]}]
+                    messages: [{role: "user", content: [{type: "text", text: "Expert DTG. Légende courte (150 car) pour cette photo."}, {type: "image_url", image_url: {url: b64}}]}]
                 })
             });
             const d = await res.json();
             document.getElementById('finalTxt').value = d.choices[0].message.content;
-        } catch(e) { document.getElementById('finalTxt').value = ""; }
+        } catch(e) {}
     }
 
     function savePhoto() {
@@ -203,9 +197,9 @@
         img.onload = () => {
             cvs.width = 1000; cvs.height = 750;
             ctx.drawImage(img, 0, 0, 1000, 750);
-            ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0, 650, 1000, 100);
+            ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0, 650, 1000, 100);
             ctx.fillStyle = "#c5a059"; ctx.font = "bold 22px Arial";
-            ctx.fillText(document.getElementById('subPoste').value, 25, 685);
+            ctx.fillText(document.getElementById('subPoste').value + " - Dossier " + state.fileNum, 25, 685);
             ctx.fillStyle = "white"; ctx.font = "19px Arial";
             ctx.fillText(document.getElementById('finalTxt').value, 25, 725);
 
@@ -221,29 +215,31 @@
 
     function save() {
         state.name = document.getElementById('projName').value;
-        state.key = document.getElementById('apiKey').value;
-        localStorage.setItem('dtg_pro_final', JSON.stringify(state));
+        state.fileNum = document.getElementById('fileNumber').value;
+        localStorage.setItem('dtg_pro_v7', JSON.stringify(state));
     }
 
     function exportHTML() {
-        let h = `<html><body style="font-family:sans-serif;padding:30px;background:#f0f0f0;"><h1>Rapport ${state.name}</h1>`;
-        state.photos.forEach(p => {
-            h += `<div style="background:white;padding:20px;margin-bottom:20px;border-radius:10px;"><h3>${p.sec} > ${p.sub}</h3><img src="${p.b64}" style="width:100%;"><p>${p.txt}</p></div>`;
-        });
-        h += `</body></html>`;
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([h], {type:'text/html'})); a.download = `VISIONNEUSE_${state.name}.html`; a.click();
+        let h = `<html><body style="font-family:sans-serif;padding:30px;background:#f0f0f0;"><h1>Rapport Dossier ${state.fileNum} : ${state.name}</h1>`;
+        state.photos.forEach(p => { h += `<div style="background:white;padding:20px;margin-bottom:20px;border-radius:10px;"><h3>${p.sec} > ${p.sub}</h3><img src="${p.b64}" style="width:100%;"><p>${p.txt}</p></div>`; });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([h + '</body></html>'], {type:'text/html'})); a.download = `RAPPORT_${state.fileNum}.html`; a.click();
     }
 
     async function exportZIP() {
         const zip = new JSZip();
         state.photos.forEach((p, i) => zip.file(`${p.sec}/${p.sub}_${i}.png`, p.b64.split(',')[1], {base64: true}));
-        const b = await zip.generateAsync({type:"blob"});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `DIAG_PHOTOS_${state.name}.zip`; a.click();
+        zip.generateAsync({type:"blob"}).then(b => {
+            const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `DIAG_DTG_${state.fileNum}.zip`; a.click();
+        });
     }
 
     window.onload = () => {
-        const s = localStorage.getItem('dtg_pro_final');
-        if(s) { state = JSON.parse(s); document.getElementById('projName').value = state.name; document.getElementById('apiKey').value = state.key; }
+        const s = localStorage.getItem('dtg_pro_v7');
+        if(s) { 
+            state = JSON.parse(s); 
+            document.getElementById('projName').value = state.name || ""; 
+            document.getElementById('fileNumber').value = state.fileNum || ""; 
+        }
     };
 </script>
 </body>
