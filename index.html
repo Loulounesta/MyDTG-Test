@@ -78,7 +78,6 @@
         /* MODAL PLEIN ECRAN (VISIONNEUSE & DESSIN) */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;}
         .modal-content { max-width: 100%; max-height: 50vh; border: 2px solid var(--adn-gold); border-radius: 8px; object-fit: contain; }
-        /* Canvas de dessin : On bloque les actions tactiles (zoom/scroll) pour pouvoir dessiner */
         #drawCanvas { touch-action: none; background: #000; } 
         .modal-close { position: absolute; top: 15px; right: 20px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; }
         .modal-edit-box { width: 100%; max-width: 500px; margin-top: 15px; }
@@ -443,17 +442,16 @@
         
         loadComments();
 
-        // 🚀 NOUVEAU : COMPRESSION INVISIBLE DE L'IMAGE BRUTE
+        // COMPRESSION INVISIBLE DE L'IMAGE BRUTE
         const reader = new FileReader();
         reader.onload = (ev) => {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const MAX_SIZE = 1200; // Taille max raisonnable pour un rapport
+                const MAX_SIZE = 1200; 
                 let width = img.width;
                 let height = img.height;
 
-                // Calcul du ratio pour ne pas déformer l'image
                 if (width > height && width > MAX_SIZE) {
                     height *= MAX_SIZE / width;
                     width = MAX_SIZE;
@@ -467,7 +465,6 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
 
-                // On sauvegarde la version compressée en mémoire (JPEG qualité 80% = très léger)
                 window.lastB64 = canvas.toDataURL('image/jpeg', 0.8);
             };
             img.src = ev.target.result;
@@ -486,6 +483,15 @@
             ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0, 650, 1000, 100);
             ctx.fillStyle = "#c5a059"; ctx.font = "bold 22px Arial";
             ctx.fillText(currentOuvrage + (state.fileNum ? " | DOSSIER " + state.fileNum : ""), 25, 685);
+            
+            // NOUVEAU : INCRUSTATION DATE
+            let currentDate = new Date().toLocaleDateString('fr-FR');
+            ctx.textAlign = "right";
+            ctx.fillStyle = "#aaaaaa";
+            ctx.font = "italic 16px Arial";
+            ctx.fillText(currentDate, 975, 685);
+            ctx.textAlign = "left"; // Reset alignement pour la suite
+
             ctx.fillStyle = "white"; ctx.font = "19px Arial";
             ctx.fillText(document.getElementById('finalTxt').value, 25, 725);
             
@@ -494,7 +500,8 @@
                 sec: currentSec, 
                 sub: currentOuvrage, 
                 txt: document.getElementById('finalTxt').value, 
-                b64: cvs.toDataURL("image/png"), // L'image incrustée reste en PNG (qualité nette du texte)
+                date: currentDate, // Mémorisation de la date d'origine
+                b64: cvs.toDataURL("image/png"), 
                 raw: window.lastB64 
             });
             
@@ -543,6 +550,15 @@
             ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0, 650, 1000, 100);
             ctx.fillStyle = "#c5a059"; ctx.font = "bold 22px Arial";
             ctx.fillText(p.sub + (state.fileNum ? " | DOSSIER " + state.fileNum : ""), 25, 685);
+            
+            // NOUVEAU : Ré-incrustation de la date d'origine
+            let captureDate = p.date || new Date().toLocaleDateString('fr-FR');
+            ctx.textAlign = "right";
+            ctx.fillStyle = "#aaaaaa";
+            ctx.font = "italic 16px Arial";
+            ctx.fillText(captureDate, 975, 685);
+            ctx.textAlign = "left";
+
             ctx.fillStyle = "white"; ctx.font = "19px Arial";
             ctx.fillText(newTxt, 25, 725);
             
@@ -643,7 +659,7 @@
 
     function saveAnnotation() {
         let p = state.photos[currentModalIndex];
-        p.raw = dCvs.toDataURL('image/jpeg', 0.8); // On recompresse légèrement après le dessin
+        p.raw = dCvs.toDataURL('image/jpeg', 0.8); 
         cancelAnnotation();
         updateCurrentPhoto(); 
     }
