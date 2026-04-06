@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <title>MyDiag-DTG</title>
+    <title>MyDiag DTG</title>
 
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=final">
     
@@ -78,6 +78,7 @@
         /* MODAL PLEIN ECRAN (VISIONNEUSE & DESSIN) */
         .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;}
         .modal-content { max-width: 100%; max-height: 50vh; border: 2px solid var(--adn-gold); border-radius: 8px; object-fit: contain; }
+        /* Canvas de dessin : On bloque les actions tactiles (zoom/scroll) pour pouvoir dessiner */
         #drawCanvas { touch-action: none; background: #000; } 
         .modal-close { position: absolute; top: 15px; right: 20px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; }
         .modal-edit-box { width: 100%; max-width: 500px; margin-top: 15px; }
@@ -154,7 +155,7 @@
 <div class="container">
     <div id="view-DASHBOARD" class="view active">
         <div class="welcome-card">
-            <h1>MyDiag DTG</h1>
+            <h1>MyDiag-DTG</h1>
             <p>Assistant de relevé terrain - Expert ADN</p>
         </div>
 
@@ -234,7 +235,6 @@
 <canvas id="canvas-hidden"></canvas>
 
 <script>
-    // BASE DE DONNEES NATIVE (Constats Types)
     const DB = {
         'ENVELOPPE ET STRUCTURE': {
             'FONDATIONS': ["FONDATIONS : OK. Pas de désordres symptomatiques.", "Fissures d’allure oblique présumant un tassement."],
@@ -296,7 +296,6 @@
     let currentModalIndex = -1; 
     let saveTimeout;
     
-    // Base de données des phrases personnalisées (Globale à l'application)
     let customCommentsDB = {};
 
     localforage.config({ name: 'MyDiagDTG', storeName: 'dtg_store' });
@@ -398,22 +397,17 @@
         else document.getElementById('globalLib').click();
     }
 
-    // --- GESTION DES COMMENTAIRES (Base + Personnalisés) ---
+    // --- GESTION DES COMMENTAIRES ---
     function loadComments() {
         let html = '';
-        
-        // 1. Charge les commentaires personnalisés (S'il y en a pour cet ouvrage)
         if(customCommentsDB[currentSec] && customCommentsDB[currentSec][currentOuvrage]) {
             customCommentsDB[currentSec][currentOuvrage].forEach(c => {
                 html += `<div class="comment-item" style="border-left: 4px solid var(--adn-gold);" onclick="document.getElementById('finalTxt').value='${c.replace(/'/g, "\\'")}'">${c} <span style="float:right; font-size:0.7rem; color:var(--adn-gold);">★ Perso</span></div>`;
             });
         }
-
-        // 2. Charge les commentaires de base
         DB[currentSec][currentOuvrage].forEach(c => {
             html += `<div class="comment-item" onclick="document.getElementById('finalTxt').value='${c.replace(/'/g, "\\'")}'">${c}</div>`;
         });
-
         document.getElementById('commentList').innerHTML = html;
     }
 
@@ -432,12 +426,12 @@
         
         try {
             await localforage.setItem('dtg_custom_comments', customCommentsDB);
-            loadComments(); // Rafraîchit la liste
+            loadComments(); 
             alert("Modèle sauvegardé ! Vous le retrouverez lors de vos prochaines inspections.");
         } catch(e) { console.error(e); }
     }
 
-    // --- PHOTO / EDITION ---
+    // --- PHOTO / EDITION / COMPRESSION ---
     function onFile(e) {
         const file = e.target.files[0];
         if(!file) return;
@@ -449,8 +443,35 @@
         
         loadComments();
 
+        // 🚀 NOUVEAU : COMPRESSION INVISIBLE DE L'IMAGE BRUTE
         const reader = new FileReader();
-        reader.onload = (ev) => { window.lastB64 = ev.target.result; };
+        reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_SIZE = 1200; // Taille max raisonnable pour un rapport
+                let width = img.width;
+                let height = img.height;
+
+                // Calcul du ratio pour ne pas déformer l'image
+                if (width > height && width > MAX_SIZE) {
+                    height *= MAX_SIZE / width;
+                    width = MAX_SIZE;
+                } else if (height > MAX_SIZE) {
+                    width *= MAX_SIZE / height;
+                    height = MAX_SIZE;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // On sauvegarde la version compressée en mémoire (JPEG qualité 80% = très léger)
+                window.lastB64 = canvas.toDataURL('image/jpeg', 0.8);
+            };
+            img.src = ev.target.result;
+        };
         reader.readAsDataURL(file);
     }
 
@@ -473,7 +494,7 @@
                 sec: currentSec, 
                 sub: currentOuvrage, 
                 txt: document.getElementById('finalTxt').value, 
-                b64: cvs.toDataURL("image/png"),
+                b64: cvs.toDataURL("image/png"), // L'image incrustée reste en PNG (qualité nette du texte)
                 raw: window.lastB64 
             });
             
@@ -622,7 +643,7 @@
 
     function saveAnnotation() {
         let p = state.photos[currentModalIndex];
-        p.raw = dCvs.toDataURL('image/png'); 
+        p.raw = dCvs.toDataURL('image/jpeg', 0.8); // On recompresse légèrement après le dessin
         cancelAnnotation();
         updateCurrentPhoto(); 
     }
@@ -747,7 +768,6 @@
         } 
     }
 
-    // --- CHARGEMENT AU DEMARRAGE ---
     window.onload = async () => {
         document.getElementById('dashDate').innerText = new Date().toLocaleDateString('fr-FR');
         
@@ -757,7 +777,6 @@
             if(customDB) customCommentsDB = customDB;
         } catch(e) {}
 
-        // Chargement de l'état du projet
         try {
             const savedState = await localforage.getItem('dtg_current_state');
             if(savedState) {
