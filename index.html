@@ -15,6 +15,8 @@
     <meta name="theme-color" content="#101844">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
     <style>
         :root { --adn-blue: #101844; --adn-gold: #c5a059; --bg: #f4f6f9; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; color: #333; -webkit-tap-highlight-color: transparent; }
@@ -182,7 +184,7 @@
         
         <div style="background:var(--adn-blue); border-radius:8px; padding:12px; margin-bottom:15px; color:white; display:flex; align-items:center; gap:10px;">
             <label style="color:white; margin:0; flex-shrink:0;">📍 Inspecter :</label>
-            <select id="activeBuildingSelect" onchange="changeBuilding(this.value)" style="margin:0; padding:8px; font-weight:bold; border:none;"></select>
+            <select id="activeBuildingSelect" onchange="changeBuilding(this.value)" style="margin:0; padding:8px; font-weight:bold; border:none; color:#333;"></select>
         </div>
 
         <h2 id="secTitle" style="color:var(--adn-blue); font-size: 1.2rem; margin-top:0; border-bottom: 2px solid var(--adn-gold); padding-bottom:10px;">Rubrique</h2>
@@ -264,22 +266,14 @@
     let currentModalIndex = -1; 
     let saveTimeout;
 
-    // --- INDEXED_DB ---
-    function initDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open("MyDiagDTG_Database", 1);
-            request.onupgradeneeded = (e) => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains("stateStore")) db.createObjectStore("stateStore", { keyPath: "id" });
-            };
-            request.onsuccess = (e) => resolve(e.target.result);
-            request.onerror = (e) => reject(e.target.error);
-        });
-    }
+    // Configuration de LocalForage
+    localforage.config({
+        name: 'MyDiagDTG',
+        storeName: 'dtg_store'
+    });
 
     // --- GESTION BATIMENTS ---
     function renderBuildingUI() {
-        // Liste Dashboard
         const listUI = document.getElementById('buildingListUI');
         listUI.innerHTML = state.buildings.map((b, index) => `
             <div class="building-item">
@@ -288,7 +282,6 @@
             </div>
         `).join('');
 
-        // Selecteur d'onglet
         const selectUI = document.getElementById('activeBuildingSelect');
         selectUI.innerHTML = state.buildings.map(b => `<option value="${b}" ${b === currentBuilding ? 'selected' : ''}>${b}</option>`).join('');
     }
@@ -305,7 +298,6 @@
     }
 
     function deleteBuilding(bName) {
-        // Vérifie si des photos existent pour ce bâtiment
         const photosInBuilding = state.photos.filter(p => p.building === bName).length;
         if(photosInBuilding > 0) {
             alert(`Impossible de supprimer : Ce bâtiment contient ${photosInBuilding} photo(s).`);
@@ -356,7 +348,6 @@
         let html = '';
 
         for (let ouvrage in DB[currentSec]) {
-            // On filtre par Section ET par Bâtiment actif !
             const photosOuvrage = state.photos.filter(p => p.sec === currentSec && p.sub === ouvrage && (p.building || "Bâtiment Principal") === currentBuilding);
             const count = photosOuvrage.length;
             const badgeColor = count > 0 ? '#27ae60' : '#e74c3c';
@@ -431,7 +422,7 @@
             ctx.fillText(document.getElementById('finalTxt').value, 25, 725);
             
             state.photos.push({ 
-                building: currentBuilding, // Enregistre le bâtiment ciblé
+                building: currentBuilding, 
                 sec: currentSec, 
                 sub: currentOuvrage, 
                 txt: document.getElementById('finalTxt').value, 
@@ -505,7 +496,7 @@
         img.src = p.raw; 
     }
 
-    // --- SAUVEGARDE DB ---
+    // --- SAUVEGARDE VIA LOCALFORAGE ---
     function triggerSaveToast() {
         const toast = document.getElementById('saveIndicator');
         toast.classList.add('show');
@@ -526,11 +517,8 @@
         triggerSaveToast();
 
         try {
-            const db = await initDB();
-            const tx = db.transaction("stateStore", "readwrite");
-            const store = tx.objectStore("stateStore");
-            store.put({ id: "dtg_current_state", data: state });
-        } catch(err) { console.error("Erreur DB :", err); }
+            await localforage.setItem('dtg_current_state', state);
+        } catch(err) { console.error("Erreur LocalForage save :", err); }
     }
 
     // --- EXPORTS ---
@@ -546,7 +534,6 @@
             <p><strong>Date d'export :</strong> ${d}</p>
         </div>`;
         
-        // Tri par bâtiment pour que le rapport soit lisible
         state.buildings.forEach(bldg => {
             const photosBldg = state.photos.filter(p => (p.building || "Bâtiment Principal") === bldg);
             if(photosBldg.length > 0) {
@@ -567,7 +554,6 @@
     async function exportZIP() {
         const zip = new JSZip();
         state.photos.forEach((p, i) => {
-            // Création de l'architecture : Bâtiment / Section / Poste.png
             let safeBuilding = (p.building || "Bâtiment Principal").replace(/[\/\\]/g, '_');
             let safeSec = p.sec.replace(/[\/\\]/g, '_');
             let safeSub = p.sub.replace(/[\/\\]/g, '_');
@@ -582,42 +568,35 @@
     async function resetApp() { 
         if(confirm("Attention, cela supprimera TOUS les bâtiments et photos de ce dossier. Continuer ?")) { 
             try {
-                const db = await initDB();
-                const tx = db.transaction("stateStore", "readwrite");
-                tx.objectStore("stateStore").clear();
+                await localforage.removeItem('dtg_current_state');
             } catch(e) {}
             location.reload(); 
         } 
     }
 
+    // --- CHARGEMENT AU DEMARRAGE ---
     window.onload = async () => {
         document.getElementById('dashDate').innerText = new Date().toLocaleDateString('fr-FR');
         try {
-            const db = await initDB();
-            const tx = db.transaction("stateStore", "readonly");
-            const store = tx.objectStore("stateStore");
-            const request = store.get("dtg_current_state");
+            const savedState = await localforage.getItem('dtg_current_state');
+            if(savedState) {
+                state = savedState;
+                
+                if(!state.buildings || state.buildings.length === 0) state.buildings = ["Bâtiment Principal"];
+                currentBuilding = state.buildings[0];
 
-            request.onsuccess = () => {
-                if(request.result && request.result.data) {
-                    state = request.result.data;
-                    
-                    // Rétrocompatibilité : si ancien dossier sans bâtiment
-                    if(!state.buildings || state.buildings.length === 0) state.buildings = ["Bâtiment Principal"];
-                    currentBuilding = state.buildings[0];
-
-                    document.getElementById('projName').value = state.name || ""; 
-                    document.getElementById('fileNumber').value = state.fileNum || ""; 
-                    document.getElementById('projAddress').value = state.address || ""; 
-                    document.getElementById('inspectorName').value = state.inspector || ""; 
-                    
-                    renderBuildingUI();
-                    updateDashStats();
-                } else {
-                    renderBuildingUI();
-                }
-            };
+                document.getElementById('projName').value = state.name || ""; 
+                document.getElementById('fileNumber').value = state.fileNum || ""; 
+                document.getElementById('projAddress').value = state.address || ""; 
+                document.getElementById('inspectorName').value = state.inspector || ""; 
+                
+                renderBuildingUI();
+                updateDashStats();
+            } else {
+                renderBuildingUI();
+            }
         } catch(err) {
+            console.error("Erreur de chargement LocalForage :", err);
             renderBuildingUI();
         }
     };
