@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <title>MyDiag-DTG</title>
+    <title>MyDiag DTG</title>
 
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=final">
     
@@ -102,9 +102,15 @@
 <div id="editorOverlay">
     <h2 id="editorTitle" style="color:var(--adn-blue); margin-top:0;">Rubrique</h2>
     <p id="editorBuildingName" style="color:var(--adn-gold); font-weight:bold; margin-top:-10px; margin-bottom:10px;"></p>
-    <p style="font-size: 0.85rem; color: #666; margin-top:0px; margin-bottom:15px;">Sélectionnez un constat type ou complétez manuellement :</p>
-    <textarea id="finalTxt" rows="3" placeholder="Saisir un commentaire..."></textarea>
+    
+    <div style="position: relative;">
+        <textarea id="finalTxt" rows="3" placeholder="Saisir ou modifier un commentaire..."></textarea>
+        <button onclick="saveCustomComment()" style="position:absolute; bottom:10px; right:10px; background:var(--adn-gold); color:white; border:none; padding:5px 10px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2);">➕ Modèle</button>
+    </div>
+
+    <p style="font-size: 0.85rem; color: #666; margin-top:15px; margin-bottom:10px;">Ou sélectionnez un constat rapide :</p>
     <div id="commentList" class="comment-list"></div>
+    
     <button class="btn-action btn-save" onclick="savePhoto()">💾 VALIDER ET INCRUSTER LA LÉGENDE</button>
     <button class="btn-action" style="background:#888; margin-top:10px;" onclick="document.getElementById('editorOverlay').style.display='none'">❌ ANNULER</button>
 </div>
@@ -228,6 +234,7 @@
 <canvas id="canvas-hidden"></canvas>
 
 <script>
+    // BASE DE DONNEES NATIVE (Constats Types)
     const DB = {
         'ENVELOPPE ET STRUCTURE': {
             'FONDATIONS': ["FONDATIONS : OK. Pas de désordres symptomatiques.", "Fissures d’allure oblique présumant un tassement."],
@@ -288,6 +295,9 @@
     let currentOuvrage = ""; 
     let currentModalIndex = -1; 
     let saveTimeout;
+    
+    // Base de données des phrases personnalisées (Globale à l'application)
+    let customCommentsDB = {};
 
     localforage.config({ name: 'MyDiagDTG', storeName: 'dtg_store' });
 
@@ -388,6 +398,45 @@
         else document.getElementById('globalLib').click();
     }
 
+    // --- GESTION DES COMMENTAIRES (Base + Personnalisés) ---
+    function loadComments() {
+        let html = '';
+        
+        // 1. Charge les commentaires personnalisés (S'il y en a pour cet ouvrage)
+        if(customCommentsDB[currentSec] && customCommentsDB[currentSec][currentOuvrage]) {
+            customCommentsDB[currentSec][currentOuvrage].forEach(c => {
+                html += `<div class="comment-item" style="border-left: 4px solid var(--adn-gold);" onclick="document.getElementById('finalTxt').value='${c.replace(/'/g, "\\'")}'">${c} <span style="float:right; font-size:0.7rem; color:var(--adn-gold);">★ Perso</span></div>`;
+            });
+        }
+
+        // 2. Charge les commentaires de base
+        DB[currentSec][currentOuvrage].forEach(c => {
+            html += `<div class="comment-item" onclick="document.getElementById('finalTxt').value='${c.replace(/'/g, "\\'")}'">${c}</div>`;
+        });
+
+        document.getElementById('commentList').innerHTML = html;
+    }
+
+    async function saveCustomComment() {
+        const txt = document.getElementById('finalTxt').value.trim();
+        if(!txt) return alert("Veuillez d'abord taper une phrase dans la zone de texte.");
+        
+        if(!customCommentsDB[currentSec]) customCommentsDB[currentSec] = {};
+        if(!customCommentsDB[currentSec][currentOuvrage]) customCommentsDB[currentSec][currentOuvrage] = [];
+        
+        if(customCommentsDB[currentSec][currentOuvrage].includes(txt) || DB[currentSec][currentOuvrage].includes(txt)) {
+            return alert("Cette phrase existe déjà !");
+        }
+
+        customCommentsDB[currentSec][currentOuvrage].push(txt);
+        
+        try {
+            await localforage.setItem('dtg_custom_comments', customCommentsDB);
+            loadComments(); // Rafraîchit la liste
+            alert("Modèle sauvegardé ! Vous le retrouverez lors de vos prochaines inspections.");
+        } catch(e) { console.error(e); }
+    }
+
     // --- PHOTO / EDITION ---
     function onFile(e) {
         const file = e.target.files[0];
@@ -398,9 +447,7 @@
         document.getElementById('editorBuildingName').innerText = `(${currentBuilding})`;
         document.getElementById('finalTxt').value = "";
         
-        document.getElementById('commentList').innerHTML = DB[currentSec][currentOuvrage].map(c => 
-            `<div class="comment-item" onclick="document.getElementById('finalTxt').value='${c.replace(/'/g, "\\'")}'">${c}</div>`
-        ).join('');
+        loadComments();
 
         const reader = new FileReader();
         reader.onload = (ev) => { window.lastB64 = ev.target.result; };
@@ -442,7 +489,6 @@
         currentModalIndex = index;
         document.getElementById('modalImg').src = state.photos[index].b64;
         document.getElementById('modalEditTxt').value = state.photos[index].txt; 
-        
         cancelAnnotation(); 
         document.getElementById('photoModal').style.display = "flex";
     }
@@ -701,8 +747,17 @@
         } 
     }
 
+    // --- CHARGEMENT AU DEMARRAGE ---
     window.onload = async () => {
         document.getElementById('dashDate').innerText = new Date().toLocaleDateString('fr-FR');
+        
+        // Chargement des phrases perso
+        try {
+            const customDB = await localforage.getItem('dtg_custom_comments');
+            if(customDB) customCommentsDB = customDB;
+        } catch(e) {}
+
+        // Chargement de l'état du projet
         try {
             const savedState = await localforage.getItem('dtg_current_state');
             if(savedState) {
