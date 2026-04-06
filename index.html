@@ -12,91 +12,114 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="MyDiag-DTG">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#101844">
+    <meta name="theme-color" content="#0F172A">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
     <style>
-        :root { --adn-blue: #101844; --adn-gold: #c5a059; --bg: #f4f6f9; --header-bg: #1a202c; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; color: #333; -webkit-tap-highlight-color: transparent; }
+        /* CHARTE GRAPHIQUE HARMONISÉE DPE / DTG */
+        :root { 
+            --bg: #F4F7F9; 
+            --sur: #FFFFFF; 
+            --bor: #E2E8F0; 
+            --tx: #0F172A; 
+            --tx2: #475569;
+            --ok: #16A34A; 
+            --dan: #EF4444; 
+            --warn: #F59E0B; 
+            --r: 16px; 
+            
+            /* Couleurs identité DTG */
+            --adn-blue: #101844; 
+            --adn-gold: #c5a059; 
+        }
         
-        /* BANDEAU HAUT PERMANENT */
-        .app-header { display: flex; justify-content: space-between; align-items: center; background: var(--header-bg); color: white; padding: 0 15px; height: 60px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; }
-        .app-header-left { display: flex; align-items: center; gap: 10px; }
-        .app-logo { width: 24px; height: 24px; border-radius: 4px; object-fit: cover; }
-        .app-title { font-weight: bold; font-size: 1.1rem; letter-spacing: 0.5px; display: flex; align-items: baseline; gap: 8px;}
-        .app-version { font-size: 0.7rem; color: #888; font-weight: normal; }
+        * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--tx); display: flex; flex-direction: column; height: 100vh; -webkit-font-smoothing: antialiased; }
         
-        .app-header-right { display: flex; align-items: center; gap: 12px; }
-        .status-dot { width: 10px; height: 10px; background-color: #555; border-radius: 50%; transition: all 0.3s ease; }
-        .status-dot.saved { background-color: #27ae60; box-shadow: 0 0 8px #27ae60; }
-        .btn-header-save { background: transparent; border: 1px solid #555; color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-header-save:active { background: rgba(255,255,255,0.1); }
-        .btn-header-save.saved { border-color: #27ae60; color: #27ae60; }
+        /* BANDEAU HAUT PERMANENT (Type DPE) */
+        .hd { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 20; box-shadow: 0 4px 20px rgba(0,0,0,0.1); flex-shrink: 0; }
+        .hd-title { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;}
+        .hd-title img { width: 24px; height: 24px; border-radius: 6px; object-fit: cover;}
+        
+        .btn-save-header { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; backdrop-filter: blur(5px); }
+        .btn-save-header:active { background: rgba(255,255,255,0.2); transform: scale(0.95); }
 
-        /* Navigation */
-        .tabs { display: flex; overflow-x: auto; background: var(--adn-blue); scrollbar-width: none; border-bottom: 3px solid var(--adn-gold); flex-shrink: 0; }
+        @keyframes blinkGreen {
+            0% { background-color: #16A34A; box-shadow: 0 0 12px #16A34A; }
+            100% { background-color: #475569; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
+        }
+        .saved-blink { animation: blinkGreen 1s ease-out; }
+
+        /* ONGLETS (Type DPE) */
+        .tabs { background: #0F172A; display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; position: sticky; top: 56px; z-index: 19; padding: 10px 16px; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; }
         .tabs::-webkit-scrollbar { display: none; }
-        .tab { padding: 15px 15px; white-space: nowrap; cursor: pointer; color: white; opacity: 0.6; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
-        .tab.active { opacity: 1; background: rgba(255,255,255,0.1); }
+        .tab { flex: 0 0 auto; padding: 8px 16px; font-size: 13px; font-weight: 600; color: #94A3B8; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: 0.2s; background: rgba(255,255,255,0.05); }
+        /* Style actif identité DTG */
+        .tab.active { color: #fff; background: var(--adn-blue); border: 1px solid var(--adn-gold); box-shadow: 0 4px 10px rgba(16,24,68,0.3); }
 
-        .container { flex: 1; overflow-y: auto; padding: 15px; }
-        .view { display: none; }
+        .container { flex: 1; overflow-y: auto; padding: 20px 16px; max-width: 800px; margin: 0 auto; width: 100%; }
+        .view { display: none; animation: fadeIn 0.3s ease-in-out; }
         .view.active { display: block; }
-        
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 15px; border: 1px solid #eee; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* CONTENUS & CARTES (Harmonisés) */
+        .card { background: var(--sur); border-radius: var(--r); border: 1px solid #F8FAFC; overflow: hidden; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(15,23,42,0.04); padding: 20px; }
         .card h2 { margin-top: 0; font-size: 1.1rem; color: var(--adn-blue); border-left: 4px solid var(--adn-gold); padding-left: 10px; margin-bottom: 15px; }
 
         .input-group { text-align: left; margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85rem; color: #555; text-transform: uppercase; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: #fafafa; }
-        input:focus, textarea:focus { outline: none; border-color: var(--adn-gold); background: #fff; }
-        input#fileNumber { font-weight: bold; letter-spacing: 2px; color: var(--adn-blue); font-size: 1.2rem; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85rem; color: var(--tx2); text-transform: uppercase; }
+        input, select, textarea { width: 100%; background: #F8FAFC; border: 1px solid var(--bor); border-radius: 8px; padding: 12px; font-size: 14px; color: var(--tx); outline: none; font-weight: 600; transition: 0.2s; -webkit-appearance: none; }
+        input:focus, select:focus, textarea:focus { background: #FFF; border-color: var(--adn-gold); box-shadow: 0 0 0 3px rgba(197,160,89,0.2); }
+        input#fileNumber { font-weight: 800; letter-spacing: 2px; color: var(--adn-blue); font-size: 1.2rem; }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .stat-box { background: #f8fafc; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0; }
-        .stat-box span { display: block; font-size: 2rem; font-weight: bold; color: var(--adn-gold); }
-        .stat-box label { font-size: 0.75rem; color: var(--adn-blue); font-weight: bold; text-transform: uppercase; margin-top: 5px; display: block; }
+        .stat-box { background: var(--sur); padding: 15px; border-radius: var(--r); text-align: center; border: 1px solid var(--bor); box-shadow: 0 8px 24px rgba(15,23,42,0.04); }
+        .stat-box span { display: block; font-size: 2rem; font-weight: 900; color: var(--adn-gold); }
+        .stat-box label { font-size: 0.75rem; color: var(--tx2); font-weight: 800; text-transform: uppercase; margin-top: 5px; display: block; }
 
-        .btn-action { background: var(--adn-blue); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+        /* BOUTONS */
+        .btn-action { background: var(--adn-blue); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: bold; width: 100%; font-size: 0.9rem; cursor: pointer; transition: 0.2s; box-shadow: 0 6px 16px rgba(16,24,68,0.2); }
         .btn-action:active { transform: scale(0.98); }
-        .btn-lib { background: #546e7a; }
-        .btn-save { background: #27ae60; padding: 15px; font-size: 1rem; margin-top: 10px; }
-        .btn-start { background: var(--adn-gold); color: #fff; font-size: 1.1rem; box-shadow: 0 4px 6px rgba(197, 160, 89, 0.3); padding: 15px; margin-top: 10px; }
+        .btn-lib { background: var(--tx2); box-shadow: 0 6px 16px rgba(71,85,105,0.2); }
+        .btn-save { background: var(--ok); box-shadow: 0 6px 16px rgba(22,163,74,0.2); margin-top: 10px; }
+        .btn-start { background: var(--adn-gold); color: #fff; font-size: 1.1rem; box-shadow: 0 6px 16px rgba(197, 160, 89, 0.3); padding: 15px; margin-top: 10px; }
 
-        /* BUILDINGS LIST */
-        .building-item { display: flex; justify-content: space-between; align-items: center; background: #f4f6f9; padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e1e4e8; }
-        .building-item strong { color: var(--adn-blue); }
-        .building-del { background: #e74c3c; color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
+        /* LISTE BATIMENTS */
+        .building-item { display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; padding: 12px 16px; border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--bor); }
+        .building-item strong { color: var(--tx); font-weight: 700; }
+        .building-del { background: var(--dan); color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
 
-        .ouvrage-card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; border: 1px solid #e1e4e8; border-left: 5px solid var(--adn-gold); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        /* CARTES OUVRAGES */
+        .ouvrage-card { background: var(--sur); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--bor); border-left: 5px solid var(--adn-gold); box-shadow: 0 4px 12px rgba(15,23,42,0.03); }
         .ouvrage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .ouvrage-title { font-weight: bold; color: var(--adn-blue); font-size: 1rem; flex: 1; padding-right: 10px; }
+        .ouvrage-title { font-weight: 800; color: var(--tx); font-size: 1rem; flex: 1; padding-right: 10px; }
         .ouvrage-badge { color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; white-space: nowrap; }
         .ouvrage-actions { display: flex; gap: 8px; }
         
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 12px; }
-        .gallery img { width: 100%; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; }
+        .gallery img { width: 100%; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--bor); cursor: pointer; }
         
         #canvas-hidden { display: none; }
 
+        /* EDITEUR OVERLAY */
         #editorOverlay { display: none; position: fixed; z-index: 9000; left: 0; top: 0; width: 100%; height: 100%; background: var(--bg); overflow-y: auto; padding: 20px; box-sizing: border-box; }
         .comment-list { max-height: 40vh; overflow-y: auto; margin-top: 15px; }
-        .comment-item { background: #fff; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; cursor: pointer; margin-bottom: 8px; line-height: 1.4; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .comment-item:active { background: #f0f4f8; border-color: var(--adn-gold); }
+        .comment-item { background: var(--sur); padding: 14px; border-radius: 8px; border: 1px solid var(--bor); font-size: 0.85rem; cursor: pointer; margin-bottom: 8px; line-height: 1.4; box-shadow: 0 2px 4px rgba(15,23,42,0.02); font-weight: 500; }
+        .comment-item:active { background: #F8FAFC; border-color: var(--adn-gold); }
 
         /* MODAL PLEIN ECRAN (VISIONNEUSE & DESSIN) */
-        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;}
-        .modal-content { max-width: 100%; max-height: 50vh; border: 2px solid var(--adn-gold); border-radius: 8px; object-fit: contain; }
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15,23,42,0.95); flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(5px);}
+        .modal-content { max-width: 100%; max-height: 50vh; border: 2px solid var(--adn-gold); border-radius: 12px; object-fit: contain; }
         #drawCanvas { touch-action: none; background: #000; } 
         .modal-close { position: absolute; top: 15px; right: 20px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; }
         .modal-edit-box { width: 100%; max-width: 500px; margin-top: 15px; }
         .modal-actions { display: flex; gap: 8px; margin-top: 10px; }
-        .modal-btn { flex: 1; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 0.75rem; cursor: pointer; color: white; }
-        .btn-update { background: #2980b9; }
-        .btn-delete { background: #c0392b; }
-        .btn-draw { background: #e67e22; }
+        .modal-btn { flex: 1; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; cursor: pointer; color: white; transition: 0.2s; }
+        .btn-update { background: var(--acc); }
+        .btn-delete { background: var(--dan); }
+        .btn-draw { background: var(--warn); }
     </style>
 </head>
 <body>
@@ -105,16 +128,27 @@
 <input type="file" id="globalLib" accept="image/*" style="display:none" onchange="onFile(event)">
 <input type="file" id="importProjectFile" accept=".mydiag,.json" style="display:none" onchange="importProject(event)">
 
-<header class="app-header">
-    <div class="app-header-left">
-        <img src="apple-touch-icon.png?v=final" alt="Logo" class="app-logo" onerror="this.style.display='none'">
-        <div class="app-title">MyDiag - DTG <span class="app-version">v1.0</span></div>
+<header class="hd">
+    <div class="hd-title">
+        <img src="apple-touch-icon.png?v=final" alt="Logo" onerror="this.style.display='none'">
+        MyDiag - DTG <span style="font-size:11px; color:#94A3B8; font-weight:600; margin-left:4px; opacity:0.8;">v1.0</span>
     </div>
-    <div class="app-header-right">
-        <div id="statusDot" class="status-dot"></div>
-        <button id="btnSaveHeader" class="btn-header-save" onclick="save()">Sauvegarder</button>
+    <div style="display:flex; align-items:center; gap:12px;">
+        <div id="voyant-save" style="width:12px; height:12px; border-radius:50%; background-color:#475569; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);"></div>
+        <button id="btnSaveHeader" class="btn-save-header" onclick="save()">Sauvegarder</button>
     </div>
 </header>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab('DASHBOARD')">Projet</div>
+    <div class="tab" onclick="showTab('ENVELOPPE ET STRUCTURE')">1. Enveloppe</div>
+    <div class="tab" onclick="showTab('SOUS-SOLS')">2. Sous-Sols</div>
+    <div class="tab" onclick="showTab('PARTIES COMMUNES')">3. Communs</div>
+    <div class="tab" onclick="showTab('FLUIDES ET RESEAUX')">4. Réseaux</div>
+    <div class="tab" onclick="showTab('SECURITE GENERALE')">5. Sécu. Générale</div>
+    <div class="tab" onclick="showTab('SECURITE SPECIFIQUE')">6. Sécu. Spécifique</div>
+    <div class="tab" onclick="showTab('EXPORT')">Export</div>
+</div>
 
 <div id="editorOverlay">
     <h2 id="editorTitle" style="color:var(--adn-blue); margin-top:0;">Rubrique</h2>
@@ -122,7 +156,7 @@
     
     <div style="position: relative;">
         <textarea id="finalTxt" rows="3" placeholder="Saisir ou modifier un commentaire..."></textarea>
-        <button onclick="saveCustomComment()" style="position:absolute; bottom:10px; right:10px; background:var(--adn-gold); color:white; border:none; padding:5px 10px; border-radius:4px; font-size:0.7rem; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2);">➕ Modèle</button>
+        <button onclick="saveCustomComment()" style="position:absolute; bottom:10px; right:10px; background:var(--adn-gold); color:white; border:none; padding:5px 10px; border-radius:6px; font-size:0.7rem; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2);">➕ Modèle</button>
     </div>
 
     <p style="font-size: 0.85rem; color: #666; margin-top:15px; margin-bottom:10px;">Ou sélectionnez un constat rapide :</p>
@@ -141,31 +175,20 @@
     <div class="modal-edit-box">
         <div id="textEditArea">
             <label style="color:var(--adn-gold); font-size: 0.85rem;">Modifier la légende :</label>
-            <textarea id="modalEditTxt" rows="3" style="margin-top: 5px; border:1px solid #555; background:#222; color:white; border-radius:6px; width:100%; padding:10px; box-sizing:border-box;"></textarea>
+            <textarea id="modalEditTxt" rows="3" style="margin-top: 5px; background:#1E293B; color:white; border-radius:8px; width:100%; padding:12px; box-sizing:border-box;"></textarea>
         </div>
 
         <div class="modal-actions" id="actionRowDefault">
             <button class="modal-btn btn-draw" onclick="startAnnotationMode()">🖍️ ANNOTER</button>
-            <button class="modal-btn btn-update" onclick="updateCurrentPhoto()">✏️ SAUVER TEXTE</button>
+            <button class="modal-btn btn-update" style="background:var(--adn-blue);" onclick="updateCurrentPhoto()">✏️ SAUVER TEXTE</button>
             <button class="modal-btn btn-delete" onclick="deleteCurrentPhoto()">🗑️ SUPPRIMER</button>
         </div>
 
         <div class="modal-actions" id="actionRowDraw" style="display:none;">
-            <button class="modal-btn" style="background:#27ae60;" onclick="saveAnnotation()">✅ APPLIQUER LE DESSIN</button>
-            <button class="modal-btn" style="background:#888;" onclick="cancelAnnotation()">❌ ANNULER</button>
+            <button class="modal-btn" style="background:var(--ok);" onclick="saveAnnotation()">✅ APPLIQUER LE DESSIN</button>
+            <button class="modal-btn" style="background:var(--tx2);" onclick="cancelAnnotation()">❌ ANNULER</button>
         </div>
     </div>
-</div>
-
-<div class="tabs">
-    <div class="tab active" onclick="showTab('DASHBOARD')">Projet</div>
-    <div class="tab" onclick="showTab('ENVELOPPE ET STRUCTURE')">1. Enveloppe</div>
-    <div class="tab" onclick="showTab('SOUS-SOLS')">2. Sous-Sols</div>
-    <div class="tab" onclick="showTab('PARTIES COMMUNES')">3. Communs</div>
-    <div class="tab" onclick="showTab('FLUIDES ET RESEAUX')">4. Réseaux</div>
-    <div class="tab" onclick="showTab('SECURITE GENERALE')">5. Sécu. Générale</div>
-    <div class="tab" onclick="showTab('SECURITE SPECIFIQUE')">6. Sécu. Spécifique</div>
-    <div class="tab" onclick="showTab('EXPORT')">Export</div>
 </div>
 
 <div class="container">
@@ -216,8 +239,7 @@
     </div>
 
     <div id="view-SECTION" class="view">
-        
-        <div style="background:var(--adn-blue); border-radius:8px; padding:12px; margin-bottom:15px; color:white; display:flex; align-items:center; gap:10px;">
+        <div style="background:var(--adn-blue); border-radius:12px; padding:12px; margin-bottom:15px; display:flex; align-items:center; gap:10px; box-shadow: 0 4px 10px rgba(16,24,68,0.1);">
             <label style="color:white; margin:0; flex-shrink:0;">📍 Inspecter :</label>
             <select id="activeBuildingSelect" onchange="changeBuilding(this.value)" style="margin:0; padding:8px; font-weight:bold; border:none; color:#333;"></select>
         </div>
@@ -229,17 +251,17 @@
     <div id="view-EXPORT" class="view">
         <div class="card">
             <h2>💾 Sauvegarde / Restauration</h2>
-            <p style="font-size:0.85rem; color:#666;">Sauvegardez votre projet pour le reprendre plus tard ou sur un ordinateur.</p>
+            <p style="font-size:0.85rem; color:var(--tx2); margin-bottom:15px;">Sauvegardez votre projet pour le reprendre plus tard ou sur un ordinateur.</p>
             <button class="btn-action" style="background:#2980b9;" onclick="exportProject()">⬇️ TÉLÉCHARGER LE PROJET (.mydiag)</button>
             <button class="btn-action" style="background:#8e44ad; margin-top:10px;" onclick="document.getElementById('importProjectFile').click()">⬆️ CHARGER UN PROJET</button>
         </div>
 
         <div class="card">
             <h2>Fin de mission</h2>
-            <p style="font-size:0.9rem; color:#666;">Photos prêtes à l'export : <strong id="photoCount">0</strong></p>
-            <button class="btn-action" onclick="exportHTML()" style="background:#444; padding:15px; font-size:1rem;">📄 VISIONNEUSE PC (HTML)</button>
-            <button class="btn-action" onclick="exportZIP()" style="background:var(--adn-gold); padding:15px; font-size:1rem; margin-top:15px;">📦 EXPORT POUR ADN (ZIP)</button>
-            <button class="btn-action" onclick="resetApp()" style="background:#c0392b; margin-top:40px; font-size:0.8rem;">RÉINITIALISER TOUT LE DOSSIER</button>
+            <p style="font-size:0.9rem; color:var(--tx2); margin-bottom:15px;">Photos prêtes à l'export : <strong id="photoCount" style="color:var(--adn-gold);">0</strong></p>
+            <button class="btn-action" onclick="exportHTML()" style="background:#444;">📄 VISIONNEUSE PC (HTML)</button>
+            <button class="btn-action" onclick="exportZIP()" style="background:var(--adn-gold); margin-top:15px;">📦 EXPORT POUR ADN (ZIP)</button>
+            <button class="btn-action" onclick="resetApp()" style="background:var(--dan); margin-top:40px; font-size:0.8rem;">RÉINITIALISER TOUT LE DOSSIER</button>
         </div>
     </div>
 </div>
@@ -318,7 +340,7 @@
         listUI.innerHTML = state.buildings.map((b, index) => `
             <div class="building-item">
                 <strong>${b}</strong>
-                ${index > 0 ? `<button class="building-del" onclick="deleteBuilding('${b}')">Supprimer</button>` : `<span style="font-size:0.75rem; color:#888;">Défaut</span>`}
+                ${index > 0 ? `<button class="building-del" onclick="deleteBuilding('${b}')">Supprimer</button>` : `<span style="font-size:0.75rem; color:var(--tx2);">Défaut</span>`}
             </div>
         `).join('');
 
@@ -377,7 +399,7 @@
         for (let ouvrage in DB[currentSec]) {
             const photosOuvrage = state.photos.filter(p => p.sec === currentSec && p.sub === ouvrage && (p.building || "Bâtiment Principal") === currentBuilding);
             const count = photosOuvrage.length;
-            const badgeColor = count > 0 ? '#27ae60' : '#e74c3c';
+            const badgeColor = count > 0 ? 'var(--ok)' : 'var(--dan)';
             const badgeText = count > 0 ? `${count} photo(s)` : 'À FAIRE';
 
             let galleryHtml = '';
@@ -455,6 +477,7 @@
         
         loadComments();
 
+        // COMPRESSION INVISIBLE
         const reader = new FileReader();
         reader.onload = (ev) => {
             const img = new Image();
@@ -581,8 +604,8 @@
             let btn = document.querySelector('.btn-update');
             let originalText = btn.innerHTML;
             btn.innerHTML = "✔️ MIS À JOUR !";
-            btn.style.background = "#27ae60";
-            setTimeout(() => { btn.innerHTML = originalText; btn.style.background = "#2980b9"; }, 1500);
+            btn.style.background = "var(--ok)";
+            setTimeout(() => { btn.innerHTML = originalText; btn.style.background = "var(--adn-blue)"; }, 1500);
         };
         img.src = p.raw; 
     }
@@ -676,19 +699,20 @@
 
     // --- SAUVEGARDE & IMPORT/EXPORT PROJET ---
     function triggerSaveToast() {
-        const dot = document.getElementById('statusDot');
+        const v = document.getElementById('voyant-save');
         const btn = document.getElementById('btnSaveHeader');
         
-        dot.classList.add('saved');
-        btn.classList.add('saved');
-        btn.innerHTML = "✅ Sauvegardé";
+        if(v) {
+            v.classList.remove('saved-blink');
+            void v.offsetWidth;
+            v.classList.add('saved-blink');
+        }
         
-        clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => { 
-            dot.classList.remove('saved'); 
-            btn.classList.remove('saved');
-            btn.innerHTML = "Sauvegarder";
-        }, 2000);
+        if(btn) {
+            btn.innerHTML = "✅ Sauvegardé";
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => { btn.innerHTML = "Sauvegarder"; }, 1500);
+        }
     }
 
     async function save() {
